@@ -34,6 +34,28 @@ app.get('/api/hello', function(req, res) {
   res.json({ greeting: 'hello API' });
 });
 
+const URLSchema = new mongoose.Schema({
+  OriginalURL: {type: String, required: true},
+  ShortenedURL: {type: String, required: true}
+});
+
+const URL = mongoose.model('URL',URLSchema);
+
+const createAndSaveURL = (originalURL,shortURL,done) => {
+  const url = new URL({
+    "original_url": originalURL,
+    "short_url": shortURL,
+  });
+  url.save(function(err,data) {
+    if (err) return console.log(err);
+    done(null, data)
+  });
+};
+
+const findOneByURL = (URL,done) => {
+  done(null /*, data */);
+}
+
 function isValidURL(string) {
   try {
     new URL(string);
@@ -48,6 +70,7 @@ app.post("/api/shorturl", async (req,res) => {
   if (isValidURL(url)) {
     const shortCode = nanoid(6);
     console.log(shortCode);
+
   } else {
     res.json({ "error": 'invalid url' })
   }
