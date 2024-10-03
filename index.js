@@ -53,7 +53,10 @@ const createAndSaveURL = (originalURL,shortURL,done) => {
 };
 
 const findOneByURL = (URL,done) => {
-  done(null /*, data */);
+  URL.findOne({original_url: URL}, function (err, data) {
+    if (err) return console.log(err);
+    done(null, data);
+  });
 }
 
 function isValidURL(string) {
