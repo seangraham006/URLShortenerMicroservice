@@ -21,8 +21,22 @@ app.get('/api/hello', function(req, res) {
   res.json({ greeting: 'hello API' });
 });
 
+function isValidURL(string) {
+  try {
+    new URL(string);
+    return true;
+  } catch (err) {
+    return false;
+  }
+}
+
 app.post("/api/shorturl", async (req,res) => {
-  console.log(req.body);
+  const { url } = req.body;
+  if (isValidURL(url)) {
+    console.log("true")
+  } else {
+    res.json({ "error": 'invalid url' })
+  }
 });
 
 app.listen(port, function() {
