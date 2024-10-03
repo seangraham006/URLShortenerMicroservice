@@ -1,7 +1,20 @@
 require('dotenv').config();
+const mongoose = require('mongoose');
 const express = require('express');
 const cors = require('cors');
 const app = express();
+
+let nanoid;
+(async () => {
+  nanoid = (await import('nanoid')).nanoid;
+})();
+
+mongoose.connect(process.env.MONGO_URI, {
+  useNewUrlParser: true,
+  useUnifiedTopology: true
+})
+.then(() => console.log('Connected to MongoDB Atlas'))
+.catch(err => console.error('Failed to connect:', err));
 
 // Basic Configuration
 const port = process.env.PORT || 3000;
@@ -33,7 +46,8 @@ function isValidURL(string) {
 app.post("/api/shorturl", async (req,res) => {
   const { url } = req.body;
   if (isValidURL(url)) {
-    console.log("true")
+    const shortCode = nanoid(6);
+    console.log(shortCode);
   } else {
     res.json({ "error": 'invalid url' })
   }
