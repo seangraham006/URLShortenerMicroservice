@@ -3,6 +3,7 @@ const mongoose = require('mongoose');
 const express = require('express');
 const cors = require('cors');
 const app = express();
+const isUrl = require('is-url');
 
 let nanoid;
 (async () => {
@@ -35,47 +36,90 @@ app.get('/api/hello', function(req, res) {
 });
 
 const URLSchema = new mongoose.Schema({
-  OriginalURL: {type: String, required: true},
-  ShortenedURL: {type: String, required: true}
+  originalURL: {type: String, required: true},
+  shortenedURL: {type: String, required: true}
 });
 
 const URL = mongoose.model('URL',URLSchema);
 
-const createAndSaveURL = (originalURL,shortURL,done) => {
+/*const createAndSaveURL = (originalURL,shortURL,done) => {
   const url = new URL({
-    "original_url": originalURL,
-    "short_url": shortURL,
+    original_url: originalURL,
+    short_url: shortURL,
   });
   url.save(function(err,data) {
     if (err) return console.log(err);
-    done(null, data)
+    done(null, data);
   });
+};*/
+
+const createAndSaveURL = async (originalURL, shortURL) => {
+  const url = new URL({
+    original_url: originalURL,
+    short_url: shortURL,
+  });
+
+  try {
+    const savedURL = await url.save();
+    return savedURL;
+  } catch (err) {
+    console.log(err)
+    throw err;
+  }
 };
 
-const findOneByURL = (URL,done) => {
-  URL.findOne({original_url: URL}, function (err, data) {
+/*const findOneByURL = (url,done) => {
+  URL.findOne({original_url: url}, function (err, data) {
     if (err) return console.log(err);
     done(null, data);
   });
-}
+}*/
+
+const findOneByURL = async (url) => {
+  try {
+    const foundURL = await URL.findOne({ originalURL: url });
+    return foundURL;
+  } catch (err) {
+    console.log(err);
+    throw err;
+  }
+};
 
 function isValidURL(string) {
-  try {
-    new URL(string);
-    return true;
-  } catch (err) {
-    return false;
+  console.log(string);
+  if (isUrl(string)) {
+    console.log("true");
+    return true
+  } else {
+    return false
   }
 }
 
 app.post("/api/shorturl", async (req,res) => {
   const { url } = req.body;
-  if (isValidURL(url)) {
-    const shortCode = nanoid(6);
-    console.log(shortCode);
 
+  if (isValidURL(url)) {
+    //check if exists
+    findOneByURL(url, (err, foundURL) => {
+      if (foundURL) {
+        res.json({
+          original_url: foundURL.original_url,
+          short_url: foundURL.short_url
+        });
+      } else {
+        const shortCode = nanoid(6);
+        createAndSaveURL(url, shortCode, (err, savedURL) => {
+          if (!err) {
+            res.json({
+              original_url: savedURL.original_url,
+              short_url: savedURL.short_url
+            });
+          }
+        });
+      }
+    });
   } else {
-    res.json({ "error": 'invalid url' })
+    res.json({ "error": 'invalid url' });
   }
 });
 
