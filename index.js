@@ -36,22 +36,11 @@ app.get('/api/hello', function(req, res) {
 });
 
 const URLSchema = new mongoose.Schema({
-  originalURL: {type: String, required: true},
-  shortenedURL: {type: String, required: true}
+  original_url: {type: String, required: true},
+  short_url: {type: String, required: true}
 });
 
 const URL = mongoose.model('URL',URLSchema);
-
-/*const createAndSaveURL = (originalURL,shortURL,done) => {
-  const url = new URL({
-    original_url: originalURL,
-    short_url: shortURL,
-  });
-  url.save(function(err,data) {
-    if (err) return console.log(err);
-    done(null, data);
-  });
-};*/
 
 const createAndSaveURL = async (originalURL, shortURL) => {
   const url = new URL({
@@ -68,16 +57,10 @@ const createAndSaveURL = async (originalURL, shortURL) => {
   }
 };
 
-/*const findOneByURL = (url,done) => {
-  URL.findOne({original_url: url}, function (err, data) {
-    if (err) return console.log(err);
-    done(null, data);
-  });
-}*/
-
 const findOneByURL = async (url) => {
   try {
-    const foundURL = await URL.findOne({ originalURL: url });
+    const foundURL = await URL.findOne({ original_url: url });
+    console.log(foundURL);
     return foundURL;
   } catch (err) {
     console.log(err);
@@ -100,24 +83,27 @@ app.post("/api/shorturl", async (req,res) => {
 
   if (isValidURL(url)) {
     //check if exists
-    findOneByURL(url, (err, foundURL) => {
+    try {
+      const foundURL = await findOneByURL(url);
       if (foundURL) {
-        res.json({
+        console.log("found!!")
+        return res.json({
           original_url: foundURL.original_url,
           short_url: foundURL.short_url
         });
-      } else {
-        const shortCode = nanoid(6);
-        createAndSaveURL(url, shortCode, (err, savedURL) => {
-          if (!err) {
-            res.json({
-              original_url: savedURL.original_url,
-              short_url: savedURL.short_url
-            });
-          }
-        });
       }
-    });
+
+      const shortCode = nanoid(6);
+      const savedURL = await createAndSaveURL(url,shortCode);
+      console.log("saved");
+
+      return res.json({
+        original_url: savedURL.original_url,
+        short_url: savedURL.short_url
+      });
+    } catch (err) {
+      res.status(500).json({ error: 'Database error' })
+    }
   } else {
     res.json({ "error": 'invalid url' });
   }
