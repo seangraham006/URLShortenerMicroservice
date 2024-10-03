@@ -109,6 +109,24 @@ app.post("/api/shorturl", async (req,res) => {
   }
 });
 
+app.get('/api/shorturl/:short_url', async function(req,res) {
+  const short_url = await req.params.short_url;
+
+  try {
+    const foundURL = await URL.findOne({ short_url: short_url });
+
+    if (foundURL) {
+      console.log(foundURL.original_url);
+      return res.redirect(foundURL.original_url);
+    } else {
+      return res.json({ error: 'No URL found for this short URL' });
+    }
+  } catch (err) {
+    console.error(err);
+    return res.status(500).json({ error: 'Database error' });
+  }
+});
+
 app.listen(port, function() {
   console.log(`Listening on port ${port}`);
 });
